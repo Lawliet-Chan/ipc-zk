@@ -22,6 +22,8 @@ static ENV_LOGGER: Once = Once::new();
 
 fn init() {
     ENV_LOGGER.call_once(env_logger::init);
+    let _ = load_or_create_params(PARAMS_NAME).expect("failed to load or create params");
+    let _ = load_or_create_seed(SEED_NAME).expect(" failed to load or create seed");
 }
 
 #[cfg(feature = "prove")]
@@ -36,8 +38,7 @@ fn test_prove() {
         prove(PARAMS_NAME, SEED_NAME, SOCKET_NAME);
     });
 
-    let _ = load_or_create_params(PARAMS_NAME).expect("failed to load or create params");
-    let _ = load_or_create_seed(SEED_NAME).expect(" failed to load or create seed");
+    sleep(Duration::from_secs(5));
 
     let block_result = get_block_result_from_file(TRACE_PATH);
     let buf = create_block_trace_bytes(block_result);
@@ -67,9 +68,6 @@ fn test_verify() {
     });
 
     sleep(Duration::from_secs(5));
-
-    let _ = load_or_create_params(PARAMS_NAME).expect("failed to load or create params");
-    let _ = load_or_create_seed(SEED_NAME).expect(" failed to load or create seed");
 
     let block_result = get_block_result_from_file(TRACE_PATH);
 
