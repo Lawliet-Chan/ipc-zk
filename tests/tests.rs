@@ -12,7 +12,8 @@ use types::eth::{BlockResult, BlockResultWrapper, ZkProof};
 use zkevm::prover::Prover;
 use zkevm::utils::{get_block_result_from_file, load_or_create_params, load_or_create_seed};
 
-const SOCKET_NAME: &str = "/tmp/verifier.sock";
+const PROVE_SOCKET: &str = "/tmp/prover.sock";
+const VERIFY_SOCKET: &str = "/tmp/verifier.sock";
 const PARAMS_NAME: &str = "./tests/test_params";
 const SEED_NAME: &str = "./tests/test_seed";
 const TRACE_PATH: &str = "./tests/trace.json";
@@ -35,7 +36,7 @@ fn test_prove() {
     // Start the IPC prover in a separate thread.
     info!("spawning thread to run ipc-prover");
     std::thread::spawn(|| {
-        prove(PARAMS_NAME, SEED_NAME, SOCKET_NAME);
+        prove(PARAMS_NAME, SEED_NAME, PROVE_SOCKET);
     });
 
     sleep(Duration::from_secs(5));
@@ -44,7 +45,7 @@ fn test_prove() {
     let buf = create_block_trace_bytes(block_result);
 
     info!("sending block trace");
-    let mut stream = UnixStream::connect(Path::new(SOCKET_NAME)).unwrap();
+    let mut stream = UnixStream::connect(Path::new(PROVE_SOCKET)).unwrap();
     stream
         .write_all(&buf)
         .expect("write trace into socket failed");
@@ -64,7 +65,7 @@ fn test_verify() {
     // Start the IPC verifier in a separate thread.
     info!("spawning thread to run ipc-verifier");
     std::thread::spawn(|| {
-        verify(PARAMS_NAME, SOCKET_NAME);
+        verify(PARAMS_NAME, VERIFY_SOCKET);
     });
 
     sleep(Duration::from_secs(5));
@@ -107,7 +108,7 @@ fn test_verify() {
 
     // Send buf to unix socket, and await a response
     info!("sending proof");
-    let mut stream = UnixStream::connect(Path::new(SOCKET_NAME)).unwrap();
+    let mut stream = UnixStream::connect(Path::new(VERIFY_SOCKET)).unwrap();
     stream
         .write_all(&buf)
         .expect("write proof into socket failed");
