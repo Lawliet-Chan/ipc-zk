@@ -7,10 +7,8 @@ use types::eth::{BlockResultWrapper, ZkProof};
 use zkevm::prover::Prover;
 
 /// Runs the IPC prover.
-pub fn run(params_file: &str, seed_file: &str, socket_file: &str) {
+pub fn prove(zk_prover: Prover, socket_file: &str) {
     info!("starting preliminary setup for proving");
-
-    let zk_prover = Prover::from_fpath(params_file, seed_file);
 
     let socket = Path::new(socket_file);
 

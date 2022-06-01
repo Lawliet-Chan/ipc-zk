@@ -1,5 +1,6 @@
-use ipc_zk::verifier::run;
+use ipc_zk::verifier::verify;
 use structopt::StructOpt;
+use zkevm::verifier::Verifier;
 
 #[derive(Clone, Debug, StructOpt)]
 struct Args {
@@ -17,5 +18,6 @@ fn main() {
     env_logger::init();
 
     let args = Args::from_args();
-    run(&args.params_file, &args.socket_file);
+    let zk_verifier = Verifier::from_fpath(&args.params_file);
+    verify(zk_verifier, &args.socket_file);
 }

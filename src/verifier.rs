@@ -8,10 +8,8 @@ use types::eth::{BlockResult, ZkProof};
 use zkevm::verifier::Verifier;
 
 /// Runs the IPC verifier.
-pub fn run(params_file: &str, socket_file: &str) {
+pub fn verify(zk_verifier: Verifier, socket_file: &str) {
     info!("starting preliminary setup for verifying");
-
-    let zk_verifier = Verifier::from_fpath(params_file);
 
     let socket = Path::new(socket_file);
 

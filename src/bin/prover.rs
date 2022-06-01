@@ -1,5 +1,6 @@
-use ipc_zk::prover::run;
+use ipc_zk::prover::prove;
 use structopt::StructOpt;
+use zkevm::prover::Prover;
 
 #[derive(Clone, Debug, StructOpt)]
 struct Args {
@@ -20,5 +21,6 @@ fn main() {
     env_logger::init();
 
     let args = Args::from_args();
-    run(&args.params_file, &args.seed_file, &args.socket_file);
+    let zk_prover = Prover::from_fpath(&args.params_file, &args.seed_file);
+    prove(zk_prover, &args.socket_file);
 }

@@ -1,16 +1,15 @@
-use ipc_zk::prover::run as prove;
-use ipc_zk::verifier::{run as verify, TraceProof};
+use ipc_zk::prover::prove;
+use ipc_zk::verifier::{verify, TraceProof};
 use log::info;
 use std::fs::File;
 use std::io::{Read, Write};
 use std::os::unix::net::UnixStream;
 use std::path::Path;
 use std::sync::Once;
-use std::thread::sleep;
-use std::time::Duration;
 use types::eth::{BlockResult, BlockResultWrapper, ZkProof};
 use zkevm::prover::Prover;
 use zkevm::utils::{get_block_result_from_file, load_or_create_params, load_or_create_seed};
+use zkevm::verifier::Verifier;
 
 const PROVE_SOCKET: &str = "/tmp/prover.sock";
 const VERIFY_SOCKET: &str = "/tmp/verifier.sock";
@@ -33,13 +32,12 @@ fn test_prove() {
     dotenv::dotenv().ok();
     init();
 
+    let zk_prover = Prover::from_fpath(PARAMS_NAME, SEED_NAME);
     // Start the IPC prover in a separate thread.
     info!("spawning thread to run ipc-prover");
     std::thread::spawn(|| {
-        prove(PARAMS_NAME, SEED_NAME, PROVE_SOCKET);
+        prove(zk_prover, PROVE_SOCKET);
     });
-
-    sleep(Duration::from_secs(5));
 
     let block_result = get_block_result_from_file(TRACE_PATH);
     let buf = create_block_trace_bytes(block_result);
@@ -62,13 +60,13 @@ fn test_verify() {
     dotenv::dotenv().ok();
     init();
 
+    let zk_verifier = Verifier::from_fpath(PARAMS_NAME);
+
     // Start the IPC verifier in a separate thread.
     info!("spawning thread to run ipc-verifier");
     std::thread::spawn(|| {
-        verify(PARAMS_NAME, VERIFY_SOCKET);
+        verify(zk_verifier, VERIFY_SOCKET);
     });
-
-    sleep(Duration::from_secs(5));
 
     let block_result = get_block_result_from_file(TRACE_PATH);
 
