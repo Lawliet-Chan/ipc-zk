@@ -1,0 +1,69 @@
+name: Lint
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  fmt:
+    name: fmt
+    runs-on: ubuntu-latest
+    container:
+      image: amd64/rust
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup toolchain
+        run: |
+          rustup toolchain install nightly
+          rustup default nightly
+          rustup component add rustfmt
+      - name: Run
+        run: cargo build; cargo fmt --all -- --check
+
+  clippy:
+    name: clippy
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        arch: [amd64]
+        rust: [nightly]
+    container:
+      image: ${{ matrix.arch }}/rust
+      env:
+        # Disable full debug symbol generation to speed up CI build and keep memory down
+        # "1" means line tables only, which is useful for panic tracebacks.
+        RUSTFLAGS: "-C debuginfo=1"
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Cache Cargo Index
+        uses: actions/cache@v2
+        with:
+          path: /github/home/.cargo/git
+          key: ${{ runner.os }}-${{ matrix.arch }}-index-cache-${{ matrix.rust }}-${{ hashFiles('**/Cargo.lock') }}
+      - name: Cache Cargo Registry
+        uses: actions/cache@v2
+        with:
+          path: /github/home/.cargo/registry
+          key: ${{ runner.os }}-${{ matrix.arch }}-registry-cache-${{ matrix.rust }}-${{ hashFiles('**/Cargo.lock') }}
+      - name: Cache Cargo Target
+        uses: actions/cache@v2
+        with:
+          path: /github/home/target
+          key: ${{ runner.os }}-${{ matrix.arch }}-target-cache-${{ matrix.rust }}-${{ hashFiles('**/Cargo.lock') }}
+      - name: Setup Rust toolchain
+        run: |
+          rustup toolchain install ${{ matrix.rust }}
+          rustup default ${{ matrix.rust }}
+          rustup component add rustfmt clippy
+      - name: Run clippy
+        run: |
+          cargo clippy -- -D warnings
+        env:
+          CARGO_HOME: "/github/home/.cargo"
+          CARGO_TARGET_DIR: "/github/home/target"
